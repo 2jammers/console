@@ -1,5 +1,7 @@
 --!strict
 
+type array = {[number]: string}
+
 --[[
 
 	A Luau implementation of JavaScript's `console` object.
@@ -12,15 +14,15 @@ local Package = { }
 
 local Assets = script.Assets
 local Plugins = script.Plugins
-local Settings = script.Settings
+local Settings = require(script.Settings)
 
 -- // Variables
 
 local timerManager = require(Assets.TimerManager)
 local loggingManager = require(Assets.LoggingManager)
 local archUtility = require(Plugins.ArchUtility)
+local countManager = require(Assets.CountManager)
 local dictionary = archUtility.dictionary
-
 
 -- // Functions
 
@@ -129,17 +131,15 @@ end
 
 --[[
 
-	Starts a timer in frames. Starts at `frames`.
+	Starts a timer in miliseconds.
 	
 	@param [string] label - The name of the new timer.
-	@param [number] [frames=0] - The amount of frames to start the timer at.
 	@returns [void]
 
 --]]
 
-function Package.time(label: string, frames: number?)
-	frames = archUtility.optionalParameter(frames, 0)
-	timerManager.logTimer(label, frames :: number)
+function Package.time(label: string)
+	timerManager.logTimer(label)
 end
 
 --[[
@@ -215,6 +215,84 @@ end
 
 function Package.getTimers(): number
 	return dictionary.getn(timerManager.timerLog)
+end
+
+--[[
+
+	Creates a group of logs, with the level provided serving as how
+	many levels away a log is from the console.
+	
+	@param [number] level - The level for each log.
+	@param [table] msgs - The messages to be logged.
+	@returns [void]
+
+--]]
+
+function Package.group(level: number, msgs: {string})
+	archUtility.foreachi(msgs, function(_, log: string)
+		loggingManager.logMessage(string.format("%s%s %s", string.rep("-", math.round(level * 2)), ">", string.format(Settings.logPattern, log)), "group")
+	end)
+end
+
+--[[
+
+	Logs `label`'s count everytime the function is called. The number
+	will increase by one every time it is called too.
+	
+	@param [string] label - The name of the count to log.
+	@returns [void]
+
+--]]
+
+function Package.count(label: string?)
+	label = archUtility.optionalParameter(label, "default")
+	countManager.logCount(label :: string)
+end
+
+--[[
+
+	Resets and logs the count associated with `label`.
+	
+	@param [string] label - The name of the count to log and reset.
+	@returns [void]
+
+--]]
+
+function Package.countReset(label: string?)
+	label = archUtility.optionalParameter(label, "default")
+	countManager.resetCount(label :: string)
+end
+
+--[[
+
+	Resets and logs the count associated with `label`.
+	
+	@param [string] label - The name of the count to log and reset.
+	@returns [array] An array of each timer name.
+
+--]]
+
+function Package.getCounters(): {string}
+	local counters = { }
+	
+	archUtility.foreach(countManager.getCountLog(), function(key, _)
+		table.insert(counters, key)
+	end)
+	
+	return counters
+end
+
+--[[
+
+	Prints a string version of `data`.
+	
+	@param [array] data - The array to be logged.
+	@returns [void]
+
+--]]
+
+function Package.table(data: array)
+	loggingManager.logMessage(archUtility.concati(data), "table")
 end
 
 return Package
