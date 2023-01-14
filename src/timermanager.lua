@@ -8,14 +8,14 @@ local Package = { }
 
 local loggingManager = require(script.Parent.LoggingManager)
 
-Package.timerLog = { } :: {[string]: {completed: boolean; startTime: number}}
+Package.timerLog = { } :: {[string]: {isCompleted: boolean; startTime: number, endTime: number}}
 
 -- // Functions
 
 function Package.logTimer(label: string)
 	loggingManager.logMessage(string.format("%s: timer started", label), "timer")
 	
-	Package.timerLog[label] = {completed = false, startTime = os.clock()}
+	Package.timerLog[label] = {isCompleted = false, startTime = os.clock(), endTime = 0}
 end
 
 function Package.requestTimer(label: string, complete: boolean)
@@ -25,8 +25,9 @@ function Package.requestTimer(label: string, complete: boolean)
 		local cachedTime: number = nil
 		
 		if complete then
-			requestedTimer.completed = true
+			requestedTimer.isCompleted = true
 			cachedTime = os.clock() - requestedTimer.startTime
+			requestedTimer.endTime = cachedTime
 			requestedTimer = nil
 		else
 			cachedTime = os.clock() - requestedTimer.startTime
