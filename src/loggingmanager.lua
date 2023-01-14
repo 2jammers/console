@@ -24,6 +24,7 @@ end
 local function silentError(msg: string)
 	local thread = task.spawn(error, msg)
 	task.cancel(thread)
+	thread = nil
 end
 
 local logTypes = {
