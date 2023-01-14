@@ -213,8 +213,8 @@ end
 
 --]]
 
-function Package.getTimers(): number
-	return dictionary.getn(timerManager.timerLog)
+function Package.getTimers(): {[string]: {isCompleted: boolean, startTime: number, endTime: number}}
+	return timerManager.timerLog
 end
 
 --[[
@@ -230,7 +230,7 @@ end
 
 function Package.group(level: number, msgs: {string})
 	archUtility.foreachi(msgs, function(_, log: string)
-		loggingManager.logMessage(string.format("%s%s %s", string.rep("-", math.round(level * 2)), ">", string.format(Settings.logPattern, log)), "group")
+		loggingManager.logMessage(string.format("%s> %s", string.rep("-", math.round(level * 2)), string.format(Settings.logPattern, log)), "group")
 	end)
 end
 
@@ -265,34 +265,27 @@ end
 
 --[[
 
-	Resets and logs the count associated with `label`.
+	Returns the counters that have been created.
 	
-	@param [string] label - The name of the count to log and reset.
-	@returns [array] An array of each timer name.
+	@returns [dictionary] Name of each counter along with its current count.
 
 --]]
 
-function Package.getCounters(): {string}
-	local counters = { }
-	
-	archUtility.foreach(countManager.getCountLog(), function(key, _)
-		table.insert(counters, key)
-	end)
-	
-	return counters
+function Package.getCounters(): {[string]: number}
+	return countManager.countLog
 end
 
 --[[
 
-	Prints a string version of `data`.
+	Logs the provided array as a string.
 	
-	@param [array] data - The array to be logged.
+	@param [array] data - The array to be logged as a string.
 	@returns [void]
 
 --]]
 
 function Package.table(data: array)
-	loggingManager.logMessage(archUtility.concati(data), "table")
+	loggingManager.logMessage(archUtility.concati(data, ", "), "table")
 end
 
 return Package
