@@ -41,6 +41,19 @@ end
 
 --[[
 
+	Logs the provided message in the console logs list.
+	
+	@param [string] msg - The message to be logged.
+	@returns [void]
+
+--]]
+
+function Package.silentLog(msg: string)
+	loggingManager.logMessageSilently(msg)
+end
+
+--[[
+
 	Errors the provided message in the console.
 	
 	@param [string] msg - The message to be errored.
