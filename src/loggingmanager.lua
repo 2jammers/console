@@ -43,6 +43,7 @@ local logTypes = {
 }
 
 Package.consoleLogs = {} :: {[string]: string}
+Package.loggingEnabled = true
 
 -- // Functions
 
@@ -53,8 +54,16 @@ function Package.logMessage(msg: string, t: logType)
 	Package.consoleLogs[t] = msg
 end
 
+function Package.logMessageSilently(msg: string)
+	Package.consoleLogs["silent_log"] = msg
+end
+
 function Package.clearLogs()
 	table.clear(Package.consoleLogs)
+end
+
+function Package.enableLogging(enabled: boolean)
+	Package.loggingEnabled = enabled
 end
 
 return Package
