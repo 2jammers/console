@@ -1,6 +1,6 @@
 --!nonstrict
 
-export type logType = "log" | "warn" | "error" | "silent_error" | "info" | "assertion" | "silent_assertion" | "trace" | "timer" | "group" | "count" | "table"
+export type logType = "log" | "warn" | "error" | "silent_error" | "trace" | "timer" | "group" | "count" | "table"
 
 -- // Package
 
@@ -8,62 +8,52 @@ local Package = { }
 
 -- // Variables
 
+local TestService = game:GetService("TestService")
+
 local Settings = require(script.Parent.Parent.Settings)
 
-local logPattern = Settings.logPattern
-local warnLogPattern = Settings.warnLogPattern
-local errLogPattern = Settings.errLogPattern
-local infoLogPattern = Settings.infoLogPattern
-local traceLogPattern = Settings.traceLogPattern
-local timerLogPattern = Settings.timerLogPattern
-
-local function errorWrapper(msg: string)
-	error(msg, 0)
-end
-
-local function silentError(msg: string)
-	local thread = task.spawn(error, msg)
-	task.cancel(thread)
-	thread = nil
-end
-
 local logTypes = {
-	["warn"] = {pattern = warnLogPattern, func = warn};
-	["error"] = {pattern = errLogPattern, func = errorWrapper};
-	["log"] = {pattern = logPattern, func = print};
-	["info"] = {pattern = infoLogPattern, func = print};
-	["silent_error"] = {pattern = errLogPattern, func = silentError};
-	["silent_assertion"] = {pattern = errLogPattern, func = silentError};
-	["assertion"] = {pattern = errLogPattern, func = errorWrapper};
-	["trace"] = {pattern = traceLogPattern, func = print};
-	["timer"] = {pattern = timerLogPattern, func = print};
-	["group"] = {pattern = "%s", func = print};
-	["count"] = {pattern = "%s", func = print};
-	["table"] = {pattern = logPattern, func = print};
+	["warn"] = warn;
+	["error"] = error;
+	["log"] = print;
+	["trace"] = print;
+	["timer"] = print;
+	["group"] = print;
+	["count"] = print;
+	["table"] = print;
 }
 
 Package.consoleLogs = {} :: {[string]: string}
-Package.loggingEnabled = true
 
 -- // Functions
 
-function Package.logMessage(msg: string, t: logType)
-	local logType = logTypes[t]
-
-	logType.func(string.format(logType.pattern, msg))
-	Package.consoleLogs[t] = msg
+function Package.logMessage<a...>(t: logType, ...: a...)
+	logTypes[t](...)
+	Package.consoleLogs[t] = {...}
 end
 
-function Package.logMessageSilently(msg: string)
-	Package.consoleLogs["silent_log"] = msg
+function Package.logSilentError<T>(msg: T)
+	local thread = task.spawn(error, msg, 0)
+	task.cancel(thread)
+	thread = nil
+	Package.consoleLogs["silent_error"] = tostring(msg)
+end
+
+function Package.logError<T>(msg: T)
+	logTypes["error"](msg, 0)
+	Package.consoleLogs["error"] = tostring(msg)
+end
+
+function Package.logMessageSilently<T>(msg: T)
+	Package.consoleLogs["silent_log"] = tostring(msg)
+end
+
+function Package.logInfo<T>(msg: T)
+	TestService:Message(tostring(msg))
 end
 
 function Package.clearLogs()
 	table.clear(Package.consoleLogs)
-end
-
-function Package.enableLogging(enabled: boolean)
-	Package.loggingEnabled = enabled
 end
 
 return Package
