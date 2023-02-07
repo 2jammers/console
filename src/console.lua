@@ -20,9 +20,8 @@ local Settings = require(script.Settings)
 
 local timerManager = require(Assets.TimerManager)
 local loggingManager = require(Assets.LoggingManager)
-local archUtility = require(Plugins.ArchUtility)
+local utility = require(Plugins.Utility)
 local countManager = require(Assets.CountManager)
-local dictionary = archUtility.dictionary
 
 -- // Functions
 
@@ -35,8 +34,8 @@ local dictionary = archUtility.dictionary
 
 --]]
 
-function Package.log(msg: string)
-	loggingManager.logMessage(msg, "log")
+function Package.log<T...>(...: T...)
+	loggingManager.logMessage("log", ...)
 end
 
 --[[
@@ -48,7 +47,7 @@ end
 
 --]]
 
-function Package.silentLog(msg: string)
+function Package.silentLog<a>(msg: a)
 	loggingManager.logMessageSilently(msg)
 end
 
@@ -61,8 +60,8 @@ end
 
 --]]
 
-function Package.error(msg: string)
-	loggingManager.logMessage(msg, "error")
+function Package.error<a>(msg: a)
+	loggingManager.logError(msg)
 end
 
 --[[
@@ -74,8 +73,8 @@ end
 
 --]]
 
-function Package.silentError(msg: string)
-	loggingManager.logMessage(msg, "silent_error")
+function Package.silentError<a>(msg: a)
+	loggingManager.logSilentError(msg)
 end
 
 --[[
@@ -87,8 +86,8 @@ end
 
 --]]
 
-function Package.warn(msg: string)
-	loggingManager.logMessage(msg, "warn")
+function Package.warn<T...>(...: T...)
+	loggingManager.logMessage("warn", ...)
 end
 
 --[[
@@ -101,7 +100,7 @@ end
 --]]
 
 function Package.info(msg: string)
-	loggingManager.logMessage(msg, "info")
+	loggingManager.logInfo(msg)
 end
 
 --[[
@@ -115,9 +114,9 @@ end
 
 --]]
 
-function Package.assert<a>(assertion: a, msg: string): a?
+function Package.assert<a, b>(assertion: a, msg: b): a?
 	if not (assertion) then
-		loggingManager.logMessage(msg, "assertion")
+		loggingManager.logError(msg)
 		return nil
 	end
 	return assertion
@@ -134,9 +133,9 @@ end
 
 --]]
 
-function Package.silentAssert<a>(assertion: a, msg: string): a?
+function Package.silentAssert<a, b>(assertion: a, msg: b): a?
 	if not (assertion) then
-		loggingManager.logMessage(msg, "silent_assertion")
+		loggingManager.logSilentError(msg)
 		return nil
 	end
 	return assertion
@@ -152,7 +151,7 @@ end
 --]]
 
 function Package.time(label: string)
-	timerManager.logTimer(label)
+	timerManager.logTimer(label, os.clock())
 end
 
 --[[
@@ -165,7 +164,7 @@ end
 --]]
 
 function Package.timeEnd(label: string)
-	timerManager.requestTimer(label, true)
+	timerManager.requestTimer(label, os.clock(), true)
 end
 
 --[[
@@ -178,7 +177,7 @@ end
 --]]
 
 function Package.timeLog(label: string)
-	timerManager.requestTimer(label, false)
+	timerManager.requestTimer(label, os.clock(), false)
 end
 
 --[[
@@ -190,7 +189,7 @@ end
 --]]
 
 function Package.trace()
-	loggingManager.logMessage(debug.traceback("", 2), "trace")
+	loggingManager.logMessage("trace", debug.traceback("", 2))
 end
 
 --[[
@@ -241,10 +240,10 @@ end
 
 --]]
 
-function Package.group(level: number, msgs: {string})
-	archUtility.foreachi(msgs, function(_, log: string)
-		loggingManager.logMessage(string.format("%s> %s", string.rep("-", math.round(level * 2)), string.format(Settings.logPattern, log)), "group")
-	end)
+function Package.group<a>(level: number, msgs: {a})
+	for index, log: a in ipairs(msgs) do
+		loggingManager.logMessage("group", `{string.rep("-", math.round(level * 2))}> {log}"`)
+	end
 end
 
 --[[
@@ -258,7 +257,7 @@ end
 --]]
 
 function Package.count(label: string?)
-	label = archUtility.optionalParameter(label, "default")
+	label = utility.optionalParam(label, "default")
 	countManager.logCount(label :: string)
 end
 
@@ -272,7 +271,7 @@ end
 --]]
 
 function Package.countReset(label: string?)
-	label = archUtility.optionalParameter(label, "default")
+	label = utility.optionalParam(label, "default")
 	countManager.resetCount(label :: string)
 end
 
@@ -298,7 +297,17 @@ end
 --]]
 
 function Package.table(data: array)
-	loggingManager.logMessage(archUtility.concati(data, ", "), "table")
+	local concatenatedArray = "{"
+	
+	for index, value in ipairs(data) do
+		if index == #data then
+			concatenatedArray = `{concatenatedArray}[{index}] = "{value}"}`
+		else
+			concatenatedArray = `{concatenatedArray}[{index}] = "{value}", `
+		end
+	end
+	
+	loggingManager.logMessage("table", concatenatedArray)
 end
 
 return Package
