@@ -8,35 +8,32 @@ local Package = { }
 
 local loggingManager = require(script.Parent.LoggingManager)
 
-Package.timerLog = { } :: {[string]: {isCompleted: boolean; startTime: number, endTime: number}}
+Package.timerLog = { } :: {[string]: {isCompleted: boolean; startTime: number; endTime: number}}
 
 -- // Functions
 
-function Package.logTimer(label: string)
-	loggingManager.logMessage(string.format("%s: timer started", label), "timer")
+function Package.logTimer(label: string, clock: number)
+	Package.timerLog[label] = {isCompleted = false, startTime = clock, endTime = 0}
 	
-	Package.timerLog[label] = {isCompleted = false, startTime = os.clock(), endTime = 0}
+	loggingManager.logMessage("timer", `{label}: timer started`)
 end
 
-function Package.requestTimer(label: string, complete: boolean)
+function Package.requestTimer(label: string, clock: number, complete: boolean)
 	local requestedTimer = Package.timerLog[label]
 
-	if requestedTimer then
-		local cachedTime: number = nil
-		
-		if complete then
-			requestedTimer.isCompleted = true
-			cachedTime = os.clock() - requestedTimer.startTime
-			requestedTimer.endTime = cachedTime
-			requestedTimer = nil
-		else
-			cachedTime = os.clock() - requestedTimer.startTime
-		end
-		
-		loggingManager.logMessage(string.format("%s: %fms", label, cachedTime * 1000), "timer")
-	else
-		loggingManager.logMessage(string.format("'%s' is not a valid timer.", label), "silent_error")
+	if not requestedTimer then
+		return
 	end
+	
+	local cachedTime = (clock - requestedTimer.startTime) * 1000000
+		
+	if complete then
+		requestedTimer.isCompleted = true
+		requestedTimer.endTime = cachedTime
+		requestedTimer = nil
+	end
+	
+	loggingManager.logMessage("timer", `{label}: {cachedTime}µs`)
 end
 
 return Package
